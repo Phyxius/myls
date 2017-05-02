@@ -1,11 +1,11 @@
 #include <stdio.h>
-#include "libmyls.h"
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
 #include <time.h>
+#include "libmyls.h"
 
 #define STAT (follow_symlinks ? stat : lstat)
 
@@ -91,9 +91,9 @@ char *get_size(struct stat stat)
 
 char *classify_file(struct stat info, const char *path)
 {
-    if (info.st_mode & S_IFLNK) return strdup("@");
-    if (info.st_mode & S_IFDIR) return strdup("/");
-    if (!access(path, X_OK)) return "*";
+    if ((info.st_mode & S_IFMT) == S_IFLNK) return strdup("@");
+    if ((info.st_mode & S_IFMT) == S_IFDIR) return strdup("/");
+    if (!access(path, X_OK)) return strdup("*");
     return strdup("");
 }
 
