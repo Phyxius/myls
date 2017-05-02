@@ -5,11 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <ctype.h>
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
-#include<libgen.h>
 #include <dirent.h>
 #include "libmyls.h"
 

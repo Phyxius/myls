@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include "libmyls.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
-#include <time.h>
 
 char *get_mode_string(mode_t mode);
 
