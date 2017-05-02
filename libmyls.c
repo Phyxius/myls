@@ -7,15 +7,20 @@
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
-#include <libgen.h>
+//#include <libgen.h>
+#include <time.h>
 
 char *get_mode_string(mode_t mode);
 
-char *get_friendly_time(timestruc_t timespec);
+char *get_friendly_time(struct timespec timespec);
+
+char *classify_file(struct stat info, const char *path);
+
+char *get_size(struct stat stat);
 
 char* readable_fs(double size/*in bytes*/, char *buf) {
     int i = 0;
-    const char* units[] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    const char* units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
     while (size > 1024) {
         size /= 1024;
         i++;
@@ -31,33 +36,56 @@ void free_finfo(finfo_t * finfo)
     free(finfo->mode);
     free(finfo->owner);
     free(finfo->time);
+    free(finfo->classification);
+    free(finfo->size);
 }
 
-int create_finfo(finfo_t * finfo, const char * path, bool long_listing, bool follow_links)
+int create_finfo(finfo_t * finfo, const char * path)
 {
     struct stat stat_buf;
-    if ((follow_links ? stat : lstat)(path, &stat_buf)) return -1;
+    if ((follow_symlinks ? stat : lstat)(path, &stat_buf)) return -1;
     if (!long_listing) finfo->name = strdup(path);
     else {
         char * temp = strdup(path);
         finfo->name = strdup(basename(temp));
         free(temp);
     }
-    if (!long_listing) return 0;
+    if (!long_listing && !classify_listings) return 0;
     finfo->inode = stat_buf.st_ino;
     finfo->mode = get_mode_string(stat_buf.st_mode);
-    finfo->size = stat_buf.st_size;
+    finfo->size = get_size(stat_buf);
     struct group *const group = getgrgid(stat_buf.st_gid);
     if (group == NULL) return -1;
     finfo->group = strdup(group->gr_name);
     struct passwd *const user = getpwuid(stat_buf.st_uid);
     if (user == NULL) return -1;
-    finfo->name = user->pw_name;
+    finfo->owner = strdup(user->pw_name);
     finfo->time = get_friendly_time(stat_buf.st_mtim);
+    if (classify_listings) finfo->classification = classify_file(stat_buf, path);
+    else finfo->classification = strdup("");
     return 0;
 }
 
-char *get_friendly_time(timestruc_t timespec)
+char *get_size(struct stat stat)
+{
+    long size;
+    if (disk_block_size <= 0) size = stat.st_size;
+    else size = stat.st_blocks * disk_block_size;
+    char * ret = calloc(SIZE_STRING_SIZE, sizeof(char));
+    if (human_readable) readable_fs(size, ret);
+    else snprintf(ret, SIZE_STRING_SIZE, "%ld", size);
+    return ret;
+}
+
+char *classify_file(struct stat info, const char *path)
+{
+    if (info.st_mode & S_IFLNK) return strdup("@");
+    if (info.st_mode & S_IFDIR) return strdup("/");
+    if (!access(path, X_OK)) return "*";
+    return strdup("");
+}
+
+char *get_friendly_time(struct timespec timespec)
 {
     time_t raw_current_time;
     struct tm current_time;
@@ -103,4 +131,17 @@ char *get_mode_string(mode_t mode)
         if (mode & MODE_BITS[i]) ret[i+1] = '-';
     }
     return ret;
+}
+
+void print_finfo(const finfo_t * info)
+{
+    if (!long_listing)
+    {
+        printf("%s%s\n", info->name, info->classification);
+        return;
+    }
+
+    printf("%ld %s %s %s %s %s %s%s\n",
+           info->inode, info->mode, info->owner, info->group,
+           info->size, info->time, info->name, info->classification);
 }
