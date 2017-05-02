@@ -19,11 +19,10 @@ typedef struct finfo_t {
     char * time;
 } finfo_t;
 
-const int MODE_STRING_LENGTH = 1+3*3+1; //1 special bit + 3*3 perm bits + 1 null
-
 char* readable_fs(double size/*in bytes*/, char *buf);
 
 int create_finfo(finfo_t * finfo, const char * path, bool long_listing, bool follow_links);
+void free_finfo(finfo_t * finfo);
 
 static const mode_t MODE_BITS[] = {
         S_IRUSR,

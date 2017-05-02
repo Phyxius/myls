@@ -24,6 +24,15 @@ char* readable_fs(double size/*in bytes*/, char *buf) {
     return buf;
 }
 
+void free_finfo(finfo_t * finfo)
+{
+    free(finfo->name);
+    free(finfo->group);
+    free(finfo->mode);
+    free(finfo->owner);
+    free(finfo->time);
+}
+
 int create_finfo(finfo_t * finfo, const char * path, bool long_listing, bool follow_links)
 {
     struct stat stat_buf;
