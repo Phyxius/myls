@@ -20,7 +20,7 @@ typedef struct finfo_t {
     char * classification;
 } finfo_t;
 
-char* readable_fs(double size/*in bytes*/, char *buf);
+char* readable_fs(double size/*in bytes*/);
 
 int create_finfo(finfo_t * finfo, const char * path);
 void free_finfo(finfo_t * finfo);
@@ -43,7 +43,6 @@ static const int TIME_STRING_SIZE = 3 + 1 + 2 + 1 + 2 + 1 + 2 + 1; //Mon dd hh:m
 static char *const CLOSE_TIME_FORMAT = "%b %d %I:%M";
 static char *const FAR_TIME_FORMAT = "%b %d %Y";
 
-static const int SIZE_STRING_SIZE = 20;
 extern bool long_listing;
 extern bool classify_listings;
 extern bool follow_symlinks;

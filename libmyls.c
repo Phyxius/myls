@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
-//#include <libgen.h>
 #include <time.h>
 
 char *get_mode_string(mode_t mode);
@@ -18,15 +17,20 @@ char *classify_file(struct stat info, const char *path);
 
 char *get_size(struct stat stat);
 
-char* readable_fs(double size/*in bytes*/, char *buf) {
+char* readable_fs(double size/*in bytes*/) {
     int i = 0;
     const char* units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
     while (size > 1024) {
         size /= 1024;
         i++;
     }
-    sprintf(buf, "%.*f%s", i, size, units[i]);
-    return buf;
+    char * ret;
+    char * temp;
+    int tempsize = asprintf(&temp, "%.1f", size);
+    if (temp[tempsize - 1] == '0') temp[tempsize - 2] = '\0';
+    asprintf(&ret, "%s%s", temp, units[i]);
+    free(temp);
+    return ret;
 }
 
 void free_finfo(finfo_t * finfo)
@@ -71,9 +75,9 @@ char *get_size(struct stat stat)
     long size;
     if (disk_block_size <= 0) size = stat.st_size;
     else size = stat.st_blocks * disk_block_size;
-    char * ret = calloc(SIZE_STRING_SIZE, sizeof(char));
-    if (human_readable) readable_fs(size, ret);
-    else snprintf(ret, SIZE_STRING_SIZE, "%ld", size);
+    char * ret = NULL;
+    if (human_readable) ret = readable_fs(size);
+    else asprintf(&ret, "%ld", size);
     return ret;
 }
 
