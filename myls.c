@@ -10,7 +10,12 @@
 #include <stdbool.h>
 #include <errno.h>
 #include<libgen.h>
+#include <dirent.h>
 #include "libmyls.h"
+
+#ifndef _DIRENT_HAVE_D_TYPE
+#error "Need to be able to retrieve file type info from readdir() --- see notes of man readdir"
+#endif
 
 bool long_listing = false;
 bool classify_listings = false;
@@ -20,10 +25,10 @@ bool recursive = false;
 long int disk_block_size = -1;
 
 //TODO: Recursion
-//TODO: handle directories
-//TODO: Handle no-arg case
+//TODO: Recursion with symlinks
 
 void process_file(const char * filepath);
+void process_directory(const char * dirpath, bool printName);
 
 int main(int argc, char ** argv)
 {
@@ -85,7 +90,10 @@ int main(int argc, char ** argv)
             optind++;
         }
     }
-
+    else //process current directory
+    {
+        process_directory(".", false);
+    }
 
     return EXIT_SUCCESS;
 }
@@ -99,4 +107,22 @@ void process_file(const char * filepath)
     }
     else print_finfo(&info);
     free_finfo(&info);
+}
+
+void process_directory(const char * dirpath, bool printName)
+{
+    DIR * dirp;
+    struct dirent *dp;
+    if ((dirp = opendir(dirpath)) == NULL)
+    {
+        fprintf(stderr, "Can't open directory %s:%s\n", dirpath, strerror(errno));
+        return;
+    }
+    if (printName) printf("%s:\n", dirpath);
+
+    while((dp = readdir(dirp)) != NULL)
+    {
+        process_file(dp->d_name);
+    }
+    closedir(dirp);
 }
