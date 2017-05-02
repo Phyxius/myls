@@ -18,6 +18,7 @@ typedef struct finfo_t {
     char * size;
     char * time;
     char * classification;
+    bool is_directory;
 } finfo_t;
 
 char* readable_fs(double size/*in bytes*/);
@@ -27,6 +28,7 @@ void free_finfo(finfo_t * finfo);
 void print_finfo(const finfo_t * finfo);
 bool is_directory(const char * path);
 char * path_cat(const char * left, const char * right);
+bool should_skip_recursive_directory(const char * dir);
 
 static const mode_t MODE_BITS[] = {
         S_IRUSR,

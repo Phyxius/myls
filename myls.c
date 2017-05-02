@@ -9,11 +9,17 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/queue.h>
 #include "libmyls.h"
 
 #ifndef _DIRENT_HAVE_D_TYPE
 #error "Need to be able to retrieve file type info from readdir() --- see notes of man readdir"
 #endif
+
+typedef struct directory {
+    char * path;
+    SLIST_ENTRY(directory) nodes;
+} directory;
 
 bool long_listing = false;
 bool classify_listings = false;
@@ -22,11 +28,13 @@ bool human_readable = false;
 bool recursive = false;
 long int disk_block_size = -1;
 
-//TODO: Recursion
-//TODO: Recursion with symlinks
+SLIST_HEAD(dirlist, directory) head;
 
-void process_file(const char * filepath, bool force_basename);
-void process_directory(const char * dirpath, bool printName);
+//TODO: Recursion
+
+static void process_file(const char * filepath, bool force_basename);
+static void process_directory(const char * dirpath, bool printName);
+static void recurse();
 
 int main(int argc, char ** argv)
 {
@@ -80,22 +88,47 @@ int main(int argc, char ** argv)
         }
     }
 
+    SLIST_INIT(&head);
     if (optind < argc)
     {
         int files_count = argc - optind;
+        bool prev_was_dir = false;
         while(optind < argc)
         {
-            if (is_directory(argv[optind])) process_directory(argv[optind], files_count > 1);
-            else process_file(argv[optind], false);
+            if (prev_was_dir) printf("\n");
+            if (is_directory(argv[optind]))
+            {
+                process_directory(argv[optind], files_count > 1);
+                prev_was_dir = true;
+            }
+            else
+            {
+                prev_was_dir = false;
+                process_file(argv[optind], false);
+            }
             optind++;
         }
+        recurse();
     }
     else //process current directory
     {
-        process_directory(".", false);
+        process_directory("./", recursive);
+        recurse();
     }
 
     return EXIT_SUCCESS;
+}
+
+void recurse()
+{
+    while(recursive && !SLIST_EMPTY(&head))
+    {
+        printf("\n");
+        char *const dirpath = head.slh_first->path;
+        process_directory(dirpath, true);
+        free(dirpath);
+        SLIST_REMOVE_HEAD(&head, nodes);
+    }
 }
 
 void process_file(const char * filepath, bool force_basename)
@@ -106,6 +139,12 @@ void process_file(const char * filepath, bool force_basename)
         fprintf(stderr, "Can't stat %s: %s\n", filepath, strerror(errno));
     }
     else print_finfo(&info);
+    if (recursive && info.is_directory && !should_skip_recursive_directory(filepath))
+    {
+        directory * node = malloc(sizeof(directory));
+        node->path = strdup(filepath);
+        SLIST_INSERT_HEAD(&head, node, nodes);
+    }
     free_finfo(&info);
 }
 
@@ -127,5 +166,4 @@ void process_directory(const char * dirpath, bool printName)
         free(fullpath);
     }
     closedir(dirp);
-    if (printName) printf("\n");
 }

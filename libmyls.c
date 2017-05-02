@@ -10,12 +10,10 @@
 #define STAT (follow_symlinks ? stat : lstat)
 
 char *get_mode_string(mode_t mode);
-
 char *get_friendly_time(struct timespec timespec);
-
 char *classify_file(struct stat info, const char *path);
-
 char *get_size(struct stat stat);
+bool _is_directory(const struct stat * info);
 
 char* readable_fs(double size/*in bytes*/) {
     int i = 0;
@@ -51,6 +49,7 @@ int create_finfo(finfo_t * finfo, const char * path, bool force_basename)
     memset(finfo, 0, sizeof(typeof(*finfo)));
     struct stat stat_buf;
     if (STAT(path, &stat_buf)) return -1;
+    finfo->is_directory = _is_directory(&stat_buf);
     if (!long_listing && !force_basename) finfo->name = strdup(path);
     else {
         char * temp = strdup(path);
@@ -162,7 +161,12 @@ bool is_directory(const char * path)
 {
     struct stat stat_buf;
     if (STAT(path, &stat_buf)) return false;
-    return (stat_buf.st_mode & S_IFDIR) != 0;
+    return _is_directory(&stat_buf);
+}
+
+bool _is_directory(const struct stat * info)
+{
+    return ((info->st_mode & S_IFMT) == S_IFDIR);
 }
 
 char * path_cat(const char * left, const char * right)
@@ -176,5 +180,17 @@ char * path_cat(const char * left, const char * right)
     memcpy(ret, left, left_length);
     ret[left_length] = '/';
     memcpy(ret + (left_length + 1), right, right_length);
+    return ret;
+
+}
+
+bool should_skip_recursive_directory(const char * path)
+{
+    char * tmp = strdup(path);
+    if (tmp[strlen(tmp) - 1] == '/') tmp[strlen(path) - 1] = '\0';
+    bool ret = false;
+    if (strcmp(basename(tmp), ".") == 0) ret = true;
+    else if (strcmp(basename(tmp), "..") == 0) ret = true;
+    free(tmp);
     return ret;
 }
