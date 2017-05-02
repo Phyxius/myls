@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
+#include<libgen.h>
 #include "libmyls.h"
 
 bool long_listing = false;
@@ -18,6 +19,9 @@ bool human_readable = false;
 bool recursive = false;
 long int disk_block_size = -1;
 
+//TODO: Recursion
+//TODO: handle directories
+//TODO: Handle no-arg case
 
 int main(int argc, char ** argv)
 {
@@ -69,7 +73,6 @@ int main(int argc, char ** argv)
             default:
                 abort();
         }
-
     }
 
     if (optind < argc)
@@ -79,7 +82,7 @@ int main(int argc, char ** argv)
             finfo_t info;
             if (create_finfo(&info, argv[optind]))
             {
-                fprintf(stderr, "Can't stat %s: %s", argv[optind], strerror(errno));
+                fprintf(stderr, "Can't stat %s: %s\n", argv[optind], strerror(errno));
                 exit(EXIT_FAILURE);
             }
             print_finfo(&info);

@@ -35,26 +35,35 @@ char* readable_fs(double size/*in bytes*/) {
 
 void free_finfo(finfo_t * finfo)
 {
-    free(finfo->name);
-    free(finfo->group);
-    free(finfo->mode);
-    free(finfo->owner);
-    free(finfo->time);
-    free(finfo->classification);
-    free(finfo->size);
+#define conditional_free(x) if(x) free(x)
+    conditional_free(finfo->name);
+    conditional_free(finfo->group);
+    conditional_free(finfo->group);
+    conditional_free(finfo->mode);
+    conditional_free(finfo->owner);
+    conditional_free(finfo->time);
+    conditional_free(finfo->classification);
+    conditional_free(finfo->size);
+#undef conditional_free
 }
 
 int create_finfo(finfo_t * finfo, const char * path)
 {
+    memset(finfo, 0, sizeof(typeof(*finfo)));
     struct stat stat_buf;
     if ((follow_symlinks ? stat : lstat)(path, &stat_buf)) return -1;
     if (!long_listing) finfo->name = strdup(path);
     else {
         char * temp = strdup(path);
+        if (temp[strlen(temp)-1] == '/') temp[strlen(path)-1] = '\0';
         finfo->name = strdup(basename(temp));
         free(temp);
     }
-    if (!long_listing && !classify_listings) return 0;
+    if (!long_listing && !classify_listings)
+    {
+        finfo->classification = strdup("");
+        return 0;
+    }
     finfo->inode = stat_buf.st_ino;
     finfo->mode = get_mode_string(stat_buf.st_mode);
     finfo->size = get_size(stat_buf);
@@ -132,7 +141,7 @@ char *get_mode_string(mode_t mode)
     }
     for (int i = 0; i < MODE_BITS_COUNT; i++)
     {
-        if (mode & MODE_BITS[i]) ret[i+1] = '-';
+        if (!(mode & MODE_BITS[i])) ret[i+1] = '-';
     }
     return ret;
 }
