@@ -22,9 +22,11 @@ typedef struct finfo_t {
 
 char* readable_fs(double size/*in bytes*/);
 
-int create_finfo(finfo_t * finfo, const char * path);
+int create_finfo(finfo_t * finfo, const char * path, bool force_basename);
 void free_finfo(finfo_t * finfo);
 void print_finfo(const finfo_t * finfo);
+bool is_directory(const char * path);
+char * path_cat(const char * left, const char * right);
 
 static const mode_t MODE_BITS[] = {
         S_IRUSR,

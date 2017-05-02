@@ -25,7 +25,7 @@ long int disk_block_size = -1;
 //TODO: Recursion
 //TODO: Recursion with symlinks
 
-void process_file(const char * filepath);
+void process_file(const char * filepath, bool force_basename);
 void process_directory(const char * dirpath, bool printName);
 
 int main(int argc, char ** argv)
@@ -82,9 +82,11 @@ int main(int argc, char ** argv)
 
     if (optind < argc)
     {
+        int files_count = argc - optind;
         while(optind < argc)
         {
-            process_file(argv[optind]);
+            if (is_directory(argv[optind])) process_directory(argv[optind], files_count > 1);
+            else process_file(argv[optind], false);
             optind++;
         }
     }
@@ -96,10 +98,10 @@ int main(int argc, char ** argv)
     return EXIT_SUCCESS;
 }
 
-void process_file(const char * filepath)
+void process_file(const char * filepath, bool force_basename)
 {
     finfo_t info;
-    if (create_finfo(&info, filepath))
+    if (create_finfo(&info, filepath, force_basename))
     {
         fprintf(stderr, "Can't stat %s: %s\n", filepath, strerror(errno));
     }
@@ -120,7 +122,10 @@ void process_directory(const char * dirpath, bool printName)
 
     while((dp = readdir(dirp)) != NULL)
     {
-        process_file(dp->d_name);
+        char * fullpath = path_cat(dirpath, dp->d_name);
+        process_file(fullpath, true);
+        free(fullpath);
     }
     closedir(dirp);
+    if (printName) printf("\n");
 }

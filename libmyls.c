@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <grp.h>
 #include <pwd.h>
+#include <time.h>
+
+#define STAT (follow_symlinks ? stat : lstat)
 
 char *get_mode_string(mode_t mode);
 
@@ -43,12 +46,12 @@ void free_finfo(finfo_t * finfo)
 #undef conditional_free
 }
 
-int create_finfo(finfo_t * finfo, const char * path)
+int create_finfo(finfo_t * finfo, const char * path, bool force_basename)
 {
     memset(finfo, 0, sizeof(typeof(*finfo)));
     struct stat stat_buf;
-    if ((follow_symlinks ? stat : lstat)(path, &stat_buf)) return -1;
-    if (!long_listing) finfo->name = strdup(path);
+    if (STAT(path, &stat_buf)) return -1;
+    if (!long_listing && !force_basename) finfo->name = strdup(path);
     else {
         char * temp = strdup(path);
         if (temp[strlen(temp)-1] == '/') temp[strlen(path)-1] = '\0';
@@ -153,4 +156,25 @@ void print_finfo(const finfo_t * info)
     printf("%ld %s %s %s %s %s %s%s\n",
            info->inode, info->mode, info->owner, info->group,
            info->size, info->time, info->name, info->classification);
+}
+
+bool is_directory(const char * path)
+{
+    struct stat stat_buf;
+    if (STAT(path, &stat_buf)) return false;
+    return (stat_buf.st_mode & S_IFDIR) != 0;
+}
+
+char * path_cat(const char * left, const char * right)
+{
+    size_t left_length = strlen(left);
+    size_t right_length = strlen(right);
+    if (left[left_length-1] == '/') left_length--;
+    if (right[right_length-1] == '/') right_length--;
+    //left + right + 1 for '/' separator + 1 for null
+    char * ret = calloc(left_length + right_length + 1 + 1, sizeof(char));
+    memcpy(ret, left, left_length);
+    ret[left_length] = '/';
+    memcpy(ret + (left_length + 1), right, right_length);
+    return ret;
 }
