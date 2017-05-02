@@ -16,6 +16,8 @@ static bool follow_symlinks = false;
 static bool human_readable = false;
 static bool recursive = false;
 static long int disk_block_size = -1; //<= 0 if not set
+static finfo_t * files = NULL;
+static int file_count = -1;
 
 int main(int argc, char ** argv)
 {
@@ -70,16 +72,11 @@ int main(int argc, char ** argv)
 
     }
 
-#define tf(val) ((val) ? "true" : "false")
-    printf("%s %s %s %s %s\n", tf(classify_listings), tf(long_listing), tf(follow_symlinks), tf(human_readable), tf(recursive));
-    printf("block size: %ld\n", disk_block_size);
-    /* Print any remaining command line arguments (not options). */
-    if (optind < argc)
+    file_count = argc - optind;
+    if (file_count > 0) files = calloc((size_t)file_count, sizeof(finfo_t));
+    while(optind < argc)
     {
-        printf ("non-option ARGV-elements: ");
-        while (optind < argc)
-            printf ("%s ", argv[optind++]);
-        putchar ('\n');
+
     }
 
     return EXIT_SUCCESS;
