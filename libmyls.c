@@ -38,7 +38,6 @@ void free_finfo(finfo_t * finfo)
 #define conditional_free(x) if(x) free(x)
     conditional_free(finfo->name);
     conditional_free(finfo->group);
-    conditional_free(finfo->group);
     conditional_free(finfo->mode);
     conditional_free(finfo->owner);
     conditional_free(finfo->time);

@@ -23,6 +23,8 @@ long int disk_block_size = -1;
 //TODO: handle directories
 //TODO: Handle no-arg case
 
+void process_file(const char * filepath);
+
 int main(int argc, char ** argv)
 {
     int c;
@@ -79,17 +81,22 @@ int main(int argc, char ** argv)
     {
         while(optind < argc)
         {
-            finfo_t info;
-            if (create_finfo(&info, argv[optind]))
-            {
-                fprintf(stderr, "Can't stat %s: %s\n", argv[optind], strerror(errno));
-                exit(EXIT_FAILURE);
-            }
-            print_finfo(&info);
-            free_finfo(&info);
+            process_file(argv[optind]);
             optind++;
         }
     }
 
+
     return EXIT_SUCCESS;
+}
+
+void process_file(const char * filepath)
+{
+    finfo_t info;
+    if (create_finfo(&info, filepath))
+    {
+        fprintf(stderr, "Can't stat %s: %s\n", filepath, strerror(errno));
+    }
+    else print_finfo(&info);
+    free_finfo(&info);
 }
