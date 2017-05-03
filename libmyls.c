@@ -1,7 +1,7 @@
 /*
  * Shea Polansky
  * CS481 Spring 2017
- * Dorian Arnold
+ * Professor Dorian Arnold
  */
 
 #include <stdio.h>

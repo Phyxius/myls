@@ -1,7 +1,7 @@
 /*
  * Shea Polansky
  * CS481 Spring 2017
- * Dorian Arnold
+ * Professor Dorian Arnold
  */
 
 #ifndef LAB_5_MYLS_H
@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 
-typedef int inode_t;
 typedef struct finfo_t {
     char * name;
     ino_t inode;
