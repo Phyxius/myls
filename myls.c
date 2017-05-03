@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/queue.h>
 #include "libmyls.h"
 
 #ifndef _DIRENT_HAVE_D_TYPE
@@ -17,7 +18,7 @@
 
 typedef struct directory {
     char * path;
-    struct directory * prev;
+    SLIST_ENTRY(directory) nodes;
 } directory_t;
 
 bool long_listing = false;
@@ -27,7 +28,7 @@ bool human_readable = false;
 bool recursive = false;
 long int disk_block_size = -1;
 
-static directory_t * tail;
+SLIST_HEAD(dirlist, directory) head;
 
 //TODO: Recursion
 
@@ -87,9 +88,7 @@ int main(int argc, char ** argv)
         }
     }
 
-    tail = malloc(sizeof(directory_t));
-    tail->prev = NULL;
-    tail->path = NULL;
+    SLIST_INIT(&head);
     if (optind < argc)
     {
         int files_count = argc - optind;
@@ -99,7 +98,7 @@ int main(int argc, char ** argv)
             if (prev_was_dir) printf("\n");
             if (is_directory(argv[optind]))
             {
-                process_directory(argv[optind], files_count > 1);
+                process_directory(argv[optind], files_count > 1 || recursive);
                 prev_was_dir = true;
             }
             else
@@ -122,11 +121,11 @@ int main(int argc, char ** argv)
 
 void recurse()
 {
-    while(recursive && tail->prev)
+    while(recursive && !SLIST_EMPTY(&head))
     {
         printf("\n");
-        typeof(tail) dir = tail;
-        tail = tail->prev;
+        directory_t * dir = SLIST_FIRST(&head);
+        SLIST_REMOVE_HEAD(&head, nodes);
         process_directory(dir->path, true);
         free(dir->path);
         free(dir);
@@ -145,8 +144,7 @@ void process_file(const char * filepath, bool force_basename)
     {
         directory_t * node = malloc(sizeof(directory_t));
         node->path = strdup(filepath);
-        node->prev = tail;
-        tail = node;
+        SLIST_INSERT_HEAD(&head, node, nodes);
     }
     free_finfo(&info);
 }
