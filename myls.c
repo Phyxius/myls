@@ -18,7 +18,7 @@
 #error "Need to be able to retrieve file type info from readdir() --- see notes of man readdir"
 #endif
 
-typedef struct directory {
+static typedef struct directory {
     char * path;
     SLIST_ENTRY(directory) nodes;
 } directory_t;
@@ -30,7 +30,7 @@ bool human_readable = false;
 bool recursive = false;
 long int disk_block_size = -1;
 
-SLIST_HEAD(dirlist, directory) head;
+static SLIST_HEAD(dirlist, directory) head;
 
 static void process_file(const char * filepath, bool force_basename);
 static void process_directory(const char * dirpath, bool printName);
