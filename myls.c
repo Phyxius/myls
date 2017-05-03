@@ -18,7 +18,7 @@
 #error "Need to be able to retrieve file type info from readdir() --- see notes of man readdir"
 #endif
 
-static typedef struct directory {
+typedef struct directory {
     char * path;
     SLIST_ENTRY(directory) nodes;
 } directory_t;
