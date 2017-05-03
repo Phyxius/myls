@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <dirent.h>
-#include <sys/queue.h>
 #include "libmyls.h"
 
 #ifndef _DIRENT_HAVE_D_TYPE
@@ -18,8 +17,8 @@
 
 typedef struct directory {
     char * path;
-    SLIST_ENTRY(directory) nodes;
-} directory;
+    struct directory * prev;
+} directory_t;
 
 bool long_listing = false;
 bool classify_listings = false;
@@ -28,7 +27,7 @@ bool human_readable = false;
 bool recursive = false;
 long int disk_block_size = -1;
 
-SLIST_HEAD(dirlist, directory) head;
+static directory_t * tail;
 
 //TODO: Recursion
 
@@ -88,7 +87,9 @@ int main(int argc, char ** argv)
         }
     }
 
-    SLIST_INIT(&head);
+    tail = malloc(sizeof(directory_t));
+    tail->prev = NULL;
+    tail->path = NULL;
     if (optind < argc)
     {
         int files_count = argc - optind;
@@ -107,8 +108,8 @@ int main(int argc, char ** argv)
                 process_file(argv[optind], false);
             }
             optind++;
+            recurse();
         }
-        recurse();
     }
     else //process current directory
     {
@@ -121,13 +122,14 @@ int main(int argc, char ** argv)
 
 void recurse()
 {
-    while(recursive && !SLIST_EMPTY(&head))
+    while(recursive && tail->prev)
     {
         printf("\n");
-        char *const dirpath = head.slh_first->path;
-        process_directory(dirpath, true);
-        free(dirpath);
-        SLIST_REMOVE_HEAD(&head, nodes);
+        typeof(tail) dir = tail;
+        tail = tail->prev;
+        process_directory(dir->path, true);
+        free(dir->path);
+        free(dir);
     }
 }
 
@@ -141,9 +143,10 @@ void process_file(const char * filepath, bool force_basename)
     else print_finfo(&info);
     if (recursive && info.is_directory && !should_skip_recursive_directory(filepath))
     {
-        directory * node = malloc(sizeof(directory));
+        directory_t * node = malloc(sizeof(directory_t));
         node->path = strdup(filepath);
-        SLIST_INSERT_HEAD(&head, node, nodes);
+        node->prev = tail;
+        tail = node;
     }
     free_finfo(&info);
 }
