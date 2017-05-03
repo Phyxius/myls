@@ -1,6 +1,8 @@
-//
-// Created by Shea on 2017-04-27.
-//
+/*
+ * Shea Polansky
+ * CS481 Spring 2017
+ * Dorian Arnold
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +31,6 @@ bool recursive = false;
 long int disk_block_size = -1;
 
 SLIST_HEAD(dirlist, directory) head;
-
-//TODO: Recursion
 
 static void process_file(const char * filepath, bool force_basename);
 static void process_directory(const char * dirpath, bool printName);

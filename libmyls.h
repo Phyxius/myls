@@ -1,6 +1,8 @@
-//
-// Created by Shea on 2017-04-23.
-//
+/*
+ * Shea Polansky
+ * CS481 Spring 2017
+ * Dorian Arnold
+ */
 
 #ifndef LAB_5_MYLS_H
 #define LAB_5_MYLS_H

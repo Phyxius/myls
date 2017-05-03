@@ -1,3 +1,9 @@
+/*
+ * Shea Polansky
+ * CS481 Spring 2017
+ * Dorian Arnold
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
